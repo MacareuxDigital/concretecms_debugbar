@@ -1,17 +1,23 @@
 <?php
 
-namespace Concrete\Package\Concrete5Debugbar;
+namespace Concrete\Package\ConcretecmsDebugbar;
 
 use Concrete\Core\Package\Package;
 use Concrete\Core\Permission\Key\Key;
-use Concrete5Debugbar\Debugbar;
+use ConcreteDebugbar\Debugbar;
+use DebugBar\DebugBarException;
+use Psr\EventDispatcher\EventDispatcherInterface;
+use Symfony\Component\EventDispatcher\EventDispatcher;
 
 class Controller extends Package
 {
     const PLACEHOLDER_TEXT = '<!-- debugbar:placeholder -->';
-    protected $pkgHandle = 'concrete5_debugbar';
-    protected $appVersionRequired = '8.3.0';
-    protected $pkgVersion = '0.3';
+    protected $pkgHandle = 'concretecms_debugbar';
+    protected $appVersionRequired = '9.0.0';
+    protected $pkgVersion = '0.9.0';
+    protected $pkgAutoloaderRegistries = [
+        'src/ConcreteDebugbar' => '\ConcreteDebugbar',
+    ];
 
     /**
      * Returns the translated name of the package.
@@ -20,7 +26,7 @@ class Controller extends Package
      */
     public function getPackageName()
     {
-        return t('PHP Debug Bar for concrete5');
+        return t('PHP Debug Bar for Concrete CMS');
     }
 
     /**
@@ -30,7 +36,7 @@ class Controller extends Package
      */
     public function getPackageDescription()
     {
-        return t('Displays a debug bar in the browser with information from php.');
+        return t('Displays a debug bar to display profiling data like database queries, memory usage, etc.');
     }
 
     /**
@@ -77,14 +83,74 @@ class Controller extends Package
                 return $debugbar['time'];
             });
 
-            $app->make('director')->addListener('on_before_render', function ($event) use ($app) {
+            /** @var EventDispatcher $director */
+            $director = $app->make('director');
+
+            $director->addListener('on_before_dispatch', function ($event) use ($app) {
+                $app->make('debugbar/time')->startMeasure('dispatch', t('Run App'));
+            });
+
+            $director->addListener('on_page_view', function ($event) use ($app) {
+                $app->make('debugbar/time')->startMeasure('page_view', t('Render Page'));
+            });
+
+            $director->addListener('on_start', function ($event) use ($app) {
+                $app->make('debugbar/time')->startMeasure('render_view', t('Render View'));
+            });
+
+            $director->addListener('on_before_render', function ($event) use ($app) {
                 $debugbarRenderer = $app->make('debugbar/renderer');
                 $v = $event->getArgument('view');
                 $v->addHeaderItem($debugbarRenderer->renderHead());
                 $v->addFooterItem(self::PLACEHOLDER_TEXT);
+                $app->make('debugbar/time')->startMeasure('render_template', t('Render Template'));
             });
 
-            $app->make('director')->addListener('on_page_output', function ($event) use ($app) {
+            $director->addListener('on_render_complete', function ($event) use ($app) {
+                try {
+                    $app->make('debugbar/time')->stopMeasure('render_view');
+                    $app->make('debugbar/time')->stopMeasure('render_template');
+                } catch (DebugBarException $exception) {
+
+                }
+            });
+
+            $director->addListener('on_shutdown', function ($event) use ($app) {
+                try {
+                    $app->make('debugbar/time')->stopMeasure('page_view');
+                    $app->make('debugbar/time')->stopMeasure('dispatch');
+                } catch (DebugBarException $exception) {
+
+                }
+            });
+
+            $director->addListener('on_block_load', function ($event) use ($app) {
+                $bID = $event->getArgument('bID');
+                $btHandle = $event->getArgument('btHandle');
+                $app->make('debugbar/time')->startMeasure(sprintf('load_block_%d', $bID), sprintf('Render %s block (bID: %d)', $btHandle, $bID));
+            });
+
+            $director->addListener('on_block_before_render', static function ($event) use ($app) {
+                /** @var \Concrete\Core\Block\Block $b */
+                $b = $event->getBlock();
+                $bID = $b->getBlockID();
+                $btHandle = $b->getBlockTypeHandle();
+                $app->make('debugbar/time')->startMeasure(sprintf('render_block_%d', $bID), sprintf('Render %s block template (bID: %d)', $btHandle, $bID));
+            });
+
+            $director->addListener('on_block_output', static function ($event) use ($app) {
+                /** @var \Concrete\Core\Block\Block $b */
+                $b = $event->getBlock();
+                $bID = $b->getBlockID();
+                $app->make('debugbar/time')->stopMeasure(sprintf('load_block_%d', $bID), [
+                    'arHandle' => $b->getAreaHandle(),
+                ]);
+                $app->make('debugbar/time')->stopMeasure(sprintf('render_block_%d', $bID), [
+                    'template' => $b->getBlockFilename(),
+                ]);
+            });
+
+            $director->addListener('on_page_output', function ($event) use ($app) {
                 $debugbarRenderer = $app->make('debugbar/renderer');
                 $contents = $event->getArgument('contents');
                 $contents = str_replace(self::PLACEHOLDER_TEXT, $debugbarRenderer->render(), $contents);

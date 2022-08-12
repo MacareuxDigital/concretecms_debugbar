@@ -1,10 +1,12 @@
 <?php
-namespace Concrete5Debugbar;
+namespace ConcreteDebugbar;
 
-use Concrete5Debugbar\DataCollector\EnvironmentDataCollector;
-use Concrete5Debugbar\DataCollector\LogDataCollector;
-use Concrete5Debugbar\DataCollector\RequestDataCollector;
-use Concrete5Debugbar\DataCollector\SessionDataCollector;
+use Concrete\Core\Database\Connection\Connection;
+use Concrete\Core\Support\Facade\Application;
+use ConcreteDebugbar\DataCollector\EnvironmentDataCollector;
+use ConcreteDebugbar\DataCollector\LogDataCollector;
+use ConcreteDebugbar\DataCollector\RequestDataCollector;
+use ConcreteDebugbar\DataCollector\SessionDataCollector;
 use DebugBar\Bridge\DoctrineCollector;
 use DebugBar\DataCollector\MemoryCollector;
 use DebugBar\DataCollector\MessagesCollector;
@@ -26,14 +28,12 @@ class Debugbar extends \DebugBar\DebugBar
         $this->addCollector(new RequestDataCollector());
         $this->addCollector(new SessionDataCollector());
         $doctrineDebugStack = new DebugStack();
-        \Core::make('Concrete\Core\Database\DatabaseManager')->getConfiguration()->setSQLLogger($doctrineDebugStack);
+        $app = Application::getFacadeApplication();
+        /** @var Connection $connection */
+        $connection = $app->make(Connection::class);
+        $connection->getConfiguration()->setSQLLogger($doctrineDebugStack);
         $this->addCollector(new DoctrineCollector($doctrineDebugStack));
         $this->addCollector(new LogDataCollector());
         $this->addCollector(new EnvironmentDataCollector());
-        // TODO: AuthenticationCollector: Show currently login user, session, etc.
-        // TODO: ControllerCollector: Show info of the controller of current request
-        // TODO: EventsCollector: Show all events on current request
-        // TODO: RouteCollector: Show info of the route of current request
-        // TODO: ViewCollector: Show info of the view of current request
     }
 }

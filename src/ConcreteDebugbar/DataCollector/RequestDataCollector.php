@@ -1,7 +1,8 @@
 <?php
-namespace Concrete5Debugbar\DataCollector;
+namespace ConcreteDebugbar\DataCollector;
 
 use Concrete\Core\Http\Request;
+use Concrete\Core\Support\Facade\Application;
 use DebugBar\DataCollector\DataCollector;
 use DebugBar\DataCollector\Renderable;
 
@@ -12,8 +13,9 @@ class RequestDataCollector extends DataCollector implements Renderable
      */
     function collect()
     {
+        $app = Application::getFacadeApplication();
         /** @var Request $request */
-        $request = \Core::make('Concrete\Core\Http\Request');
+        $request = $app->make(Request::class);
 
         $data = [];
         $data['path'] = $this->getDataFormatter()->formatVar($request->getPath());
@@ -32,7 +34,7 @@ class RequestDataCollector extends DataCollector implements Renderable
      */
     function getName()
     {
-        return 'concrete5request';
+        return 'concrete_request';
     }
 
     /**
@@ -42,9 +44,9 @@ class RequestDataCollector extends DataCollector implements Renderable
     {
         return [
             "request" => [
-                "icon" => "tags",
+                "icon" => "user",
                 "widget" => "PhpDebugBar.Widgets.VariableListWidget",
-                "map" => "concrete5request",
+                "map" => "concrete_request",
                 "default" => "{}"
             ]
         ];

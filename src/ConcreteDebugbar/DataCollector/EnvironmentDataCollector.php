@@ -1,6 +1,7 @@
 <?php
-namespace Concrete5Debugbar\DataCollector;
+namespace ConcreteDebugbar\DataCollector;
 
+use Concrete\Core\Support\Facade\Application;
 use DebugBar\DataCollector\DataCollector;
 use DebugBar\DataCollector\Renderable;
 
@@ -8,6 +9,8 @@ class EnvironmentDataCollector extends DataCollector implements Renderable
 {
     public function collect()
     {
+        $app = Application::getFacadeApplication();
+        $data['environment'] = $this->getDataFormatter()->formatVar($app->environment());
         $data['variables'] = $this->getDataFormatter()->formatVar(get_defined_vars());
         $data['server']    = $this->getDataFormatter()->formatVar($_SERVER);
         $data['classes']   = $this->getDataFormatter()->formatVar(get_declared_classes());
@@ -19,16 +22,16 @@ class EnvironmentDataCollector extends DataCollector implements Renderable
 
     public function getName()
     {
-        return 'environment';
+        return 'concrete_environment';
     }
 
     public function getWidgets()
     {
         return [
             "environment" => [
-                "icon" => "file-archive-o",
+                "icon" => "fas fa-server",
                 "widget" => "PhpDebugBar.Widgets.VariableListWidget",
-                "map" => "environment",
+                "map" => "concrete_environment",
                 "default" => "{}",
             ],
         ];

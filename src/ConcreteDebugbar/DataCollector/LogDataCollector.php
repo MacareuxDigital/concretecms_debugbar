@@ -1,5 +1,5 @@
 <?php
-namespace Concrete5Debugbar\DataCollector;
+namespace ConcreteDebugbar\DataCollector;
 
 use Concrete\Core\Logging\LogList;
 use DebugBar\DataCollector\DataCollector;
@@ -13,7 +13,10 @@ class LogDataCollector extends DataCollector implements Renderable
     function collect()
     {
         $list = new LogList();
-        $logs = $list->get();
+        $list->sortBy('l.time', 'desc');
+        $list->setItemsPerPage(20);
+        $pagination = $list->getPagination();
+        $logs = $pagination->getCurrentPageResults();
 
         $data = [];
         foreach ($logs as $log) {
@@ -28,7 +31,7 @@ class LogDataCollector extends DataCollector implements Renderable
      */
     function getName()
     {
-        return 'concrete5log';
+        return 'concrete_log';
     }
 
     /**
@@ -38,9 +41,9 @@ class LogDataCollector extends DataCollector implements Renderable
     {
         return [
             "logs" => [
-                "icon" => "file-archive-o",
+                "icon" => "fas fa-bars",
                 "widget" => "PhpDebugBar.Widgets.VariableListWidget",
-                "map" => "concrete5log",
+                "map" => "concrete_log",
                 "default" => "{}"
             ]
         ];

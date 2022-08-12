@@ -1,9 +1,10 @@
 <?php
-namespace Concrete5Debugbar\DataCollector;
+namespace ConcreteDebugbar\DataCollector;
 
+use Concrete\Core\Support\Facade\Application;
 use DebugBar\DataCollector\DataCollector;
 use DebugBar\DataCollector\Renderable;
-use Session;
+use Symfony\Component\HttpFoundation\Session\Session;
 
 class SessionDataCollector extends DataCollector implements Renderable
 {
@@ -12,7 +13,11 @@ class SessionDataCollector extends DataCollector implements Renderable
      */
     function collect()
     {
-        return Session::all();
+        $app = Application::getFacadeApplication();
+        /** @var Session $session */
+        $session = $app->make('session');
+
+        return $session->all();
     }
 
     /**
@@ -20,7 +25,7 @@ class SessionDataCollector extends DataCollector implements Renderable
      */
     function getName()
     {
-        return 'concrete5session';
+        return 'concrete_session';
     }
 
     /**
@@ -30,9 +35,9 @@ class SessionDataCollector extends DataCollector implements Renderable
     {
         return [
             "session" => [
-                "icon" => "tags",
+                "icon" => "user",
                 "widget" => "PhpDebugBar.Widgets.VariableListWidget",
-                "map" => "concrete5session",
+                "map" => "concrete_session",
                 "default" => "{}"
             ]
         ];
