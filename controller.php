@@ -14,7 +14,7 @@ class Controller extends Package
     const PLACEHOLDER_TEXT = '<!-- debugbar:placeholder -->';
     protected $pkgHandle = 'concretecms_debugbar';
     protected $appVersionRequired = '9.0.0';
-    protected $pkgVersion = '0.9.0';
+    protected $pkgVersion = '0.9.1';
     protected $pkgAutoloaderRegistries = [
         'src/ConcreteDebugbar' => '\ConcreteDebugbar',
     ];
@@ -133,21 +133,25 @@ class Controller extends Package
             $director->addListener('on_block_before_render', static function ($event) use ($app) {
                 /** @var \Concrete\Core\Block\Block $b */
                 $b = $event->getBlock();
-                $bID = $b->getBlockID();
-                $btHandle = $b->getBlockTypeHandle();
-                $app->make('debugbar/time')->startMeasure(sprintf('render_block_%d', $bID), sprintf('Render %s block template (bID: %d)', $btHandle, $bID));
+                if ($b) {
+                    $bID = $b->getBlockID();
+                    $btHandle = $b->getBlockTypeHandle();
+                    $app->make('debugbar/time')->startMeasure(sprintf('render_block_%d', $bID), sprintf('Render %s block template (bID: %d)', $btHandle, $bID));
+                }
             });
 
             $director->addListener('on_block_output', static function ($event) use ($app) {
                 /** @var \Concrete\Core\Block\Block $b */
                 $b = $event->getBlock();
-                $bID = $b->getBlockID();
-                $app->make('debugbar/time')->stopMeasure(sprintf('load_block_%d', $bID), [
-                    'arHandle' => $b->getAreaHandle(),
-                ]);
-                $app->make('debugbar/time')->stopMeasure(sprintf('render_block_%d', $bID), [
-                    'template' => $b->getBlockFilename(),
-                ]);
+                if ($b) {
+                    $bID = $b->getBlockID();
+                    $app->make('debugbar/time')->stopMeasure(sprintf('load_block_%d', $bID), [
+                        'arHandle' => $b->getAreaHandle(),
+                    ]);
+                    $app->make('debugbar/time')->stopMeasure(sprintf('render_block_%d', $bID), [
+                        'template' => $b->getBlockFilename(),
+                    ]);
+                }
             });
 
             $director->addListener('on_page_output', function ($event) use ($app) {
