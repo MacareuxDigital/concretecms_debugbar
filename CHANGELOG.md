@@ -1,5 +1,5 @@
 # Release Notes
 
-## [v0.9 (Aug 12, 2022)]
+## [v1.0.0 (Aug 23, 2022)]
 
-- PRB Review
+- Initial Release

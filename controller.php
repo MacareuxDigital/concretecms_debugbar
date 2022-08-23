@@ -14,7 +14,7 @@ class Controller extends Package
     const PLACEHOLDER_TEXT = '<!-- debugbar:placeholder -->';
     protected $pkgHandle = 'concretecms_debugbar';
     protected $appVersionRequired = '9.0.0';
-    protected $pkgVersion = '0.9.1';
+    protected $pkgVersion = '1.0.0';
     protected $pkgAutoloaderRegistries = [
         'src/ConcreteDebugbar' => '\ConcreteDebugbar',
     ];
