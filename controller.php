@@ -107,20 +107,20 @@ class Controller extends Package
             });
 
             $director->addListener('on_render_complete', function ($event) use ($app) {
-                try {
+                if ($app->make('debugbar/time')->hasStartedMeasure('render_view')) {
                     $app->make('debugbar/time')->stopMeasure('render_view');
+                }
+                if ($app->make('debugbar/time')->hasStartedMeasure('render_template')) {
                     $app->make('debugbar/time')->stopMeasure('render_template');
-                } catch (DebugBarException $exception) {
-
                 }
             });
 
             $director->addListener('on_shutdown', function ($event) use ($app) {
-                try {
+                if ($app->make('debugbar/time')->hasStartedMeasure('page_view')) {
                     $app->make('debugbar/time')->stopMeasure('page_view');
+                }
+                if ($app->make('debugbar/time')->hasStartedMeasure('dispatch')) {
                     $app->make('debugbar/time')->stopMeasure('dispatch');
-                } catch (DebugBarException $exception) {
-
                 }
             });
 
@@ -145,12 +145,16 @@ class Controller extends Package
                 $b = $event->getBlock();
                 if ($b) {
                     $bID = $b->getBlockID();
-                    $app->make('debugbar/time')->stopMeasure(sprintf('load_block_%d', $bID), [
-                        'arHandle' => $b->getAreaHandle(),
-                    ]);
-                    $app->make('debugbar/time')->stopMeasure(sprintf('render_block_%d', $bID), [
-                        'template' => $b->getBlockFilename(),
-                    ]);
+                    if ($app->make('debugbar/time')->hasStartedMeasure(sprintf('load_block_%d', $bID))) {
+                        $app->make('debugbar/time')->stopMeasure(sprintf('load_block_%d', $bID), [
+                            'arHandle' => $b->getAreaHandle(),
+                        ]);
+                    }
+                    if ($app->make('debugbar/time')->hasStartedMeasure(sprintf('render_block_%d', $bID))) {
+                        $app->make('debugbar/time')->stopMeasure(sprintf('render_block_%d', $bID), [
+                            'template' => $b->getBlockFilename(),
+                        ]);
+                    }
                 }
             });
 
