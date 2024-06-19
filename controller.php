@@ -58,12 +58,10 @@ class Controller extends Package
 
     public function on_start(): void
     {
+        $this->registerAutoload();
+
         $permission = Key::getByHandle('show_debug_bar');
-
         if ($permission && $permission->validate()) {
-
-            $this->registerAutoload();
-
             $app = $this->getApplication();
 
             $app->singleton('debugbar', Debugbar::class);
