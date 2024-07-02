@@ -2,6 +2,7 @@
 
 namespace Concrete\Package\ConcretecmsDebugbar;
 
+use Concrete\Core\Error\UserMessageException;
 use Concrete\Core\Package\Package;
 use Concrete\Core\Permission\Key\Key;
 use ConcreteDebugbar\Debugbar;
@@ -14,7 +15,7 @@ class Controller extends Package
     const PLACEHOLDER_TEXT = '<!-- debugbar:placeholder -->';
     protected $pkgHandle = 'concretecms_debugbar';
     protected $appVersionRequired = '9.0.0';
-    protected $pkgVersion = '1.0.0';
+    protected $pkgVersion = '1.0.1';
     protected $pkgAutoloaderRegistries = [
         'src/ConcreteDebugbar' => '\ConcreteDebugbar',
     ];
@@ -24,7 +25,7 @@ class Controller extends Package
      *
      * @return string
      */
-    public function getPackageName()
+    public function getPackageName(): string
     {
         return t('PHP Debug Bar for Concrete CMS');
     }
@@ -34,7 +35,7 @@ class Controller extends Package
      *
      * @return string
      */
-    public function getPackageDescription()
+    public function getPackageDescription(): string
     {
         return t('Displays a debug bar to display profiling data like database queries, memory usage, etc.');
     }
@@ -47,7 +48,7 @@ class Controller extends Package
         $this->registerAutoload();
 
         if (!class_exists('DebugBar\DebugBar')) {
-            throw new \Exception(t('Required libraries not found.'));
+            throw new UserMessageException(t('Required libraries not found.'));
         }
 
         $this->installContentFile('config/permissions.xml');
@@ -55,14 +56,12 @@ class Controller extends Package
         return parent::install();
     }
 
-    public function on_start()
+    public function on_start(): void
     {
+        $this->registerAutoload();
+
         $permission = Key::getByHandle('show_debug_bar');
-
         if ($permission && $permission->validate()) {
-
-            $this->registerAutoload();
-
             $app = $this->getApplication();
 
             $app->singleton('debugbar', Debugbar::class);
@@ -170,10 +169,14 @@ class Controller extends Package
     /**
      * Register autoloader.
      */
-    protected function registerAutoload()
+    protected function registerAutoload(): void
     {
-        if (file_exists($this->getPackagePath() . '/vendor/autoload.php')) {
-            require $this->getPackagePath() . '/vendor/autoload.php';
+        // Check if the composer dependencies are installed
+        $pkgDir = $this->getPackagePath();
+        if (!file_exists($pkgDir . '/vendor/autoload.php')) {
+            throw new UserMessageException(t('Required libraries not found. Please run `cd "%s" && composer install`', $pkgDir));
         }
+
+        require $pkgDir . '/vendor/autoload.php';
     }
 }
