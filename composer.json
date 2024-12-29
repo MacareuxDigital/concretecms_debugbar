@@ -5,9 +5,7 @@
     "license": "MIT",
     "minimum-stability": "stable",
     "require": {
-        "maximebf/debugbar": ">=1.0.0"
-    },
-    "replace": {
+        "maximebf/debugbar": ">=1.0.0",
         "psr/log": "~1.0",
         "symfony/polyfill-mbstring": "~1.0"
     },
